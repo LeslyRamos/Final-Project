@@ -17,19 +17,16 @@ head(fish_data)
 colnames(fish_data)
 
 ## Standardize Units, convert CH4 and N2O to CO2 equivalents
-# Using global warming potentials (GWP): CH4 = 25, N2O = 298
-### Standardize Units
-# Convert greenhouse gases to CO2 equivalents
 # GWP (Global Warming Potential): CH4 = 25, N2O = 298
 emissions_data <- emissions_data %>%
   mutate(
-    CH4_in_CO2eq = if_else(Gas == "CH[4]", Data * 25, 0), # Convert CH4 to CO2 equivalents
-    N2O_in_CO2eq = if_else(Gas == "N[2]*O", Data * 298, 0), # Convert N2O to CO2 equivalents
-    CO2_in_CO2eq = if_else(Gas == "CO[2]", Data * 1000, 0), # Convert CO2 from Pg to Tg
-    Total_CO2eq = CH4_in_CO2eq + N2O_in_CO2eq + CO2_in_CO2eq # Sum of all gases in CO2eq
+    CH4_in_CO2eq = if_else(Gas == "CH[4]", Data * 25, 0),
+    N2O_in_CO2eq = if_else(Gas == "N[2]*O", Data * 298, 0),
+    CO2_in_CO2eq = if_else(Gas == "CO[2]", Data * 1000, 0), 
+    Total_CO2eq = CH4_in_CO2eq + N2O_in_CO2eq + CO2_in_CO2eq
   ) %>%
   group_by(Year) %>%
-  summarize(Total_CO2eq = sum(Total_CO2eq, na.rm = TRUE)) # Aggregate by year
+  summarize(Total_CO2eq = sum(Total_CO2eq, na.rm = TRUE))
 
 head(emissions_data)
 # Summary for emissions
