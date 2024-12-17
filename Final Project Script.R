@@ -77,6 +77,19 @@ model <- glm(Fish_Response ~ Total_CO2eq,
              family = "binomial")
 summary(model)
 
+## Visualize the relationship
+ggplot(merged_data, aes(x = Total_CO2eq, y = Fish_Response)) +
+  geom_jitter(width = 0.1, height = 0.1, alpha = 0.6) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), color = "blue") +
+  labs(
+    title = "Relationship Between Total CO2eq and Fish Response",
+    x = "Total CO2eq (Tg/year)",
+    y = "Fish Response (log-odds)"
+  ) +
+  theme_minimal()
+
+
+
 ### Visualization: Fish Response Distribution
 ggplot(fish_data, aes(x = Fish_Response)) +
   geom_bar(fill = "steelblue") +
@@ -86,6 +99,7 @@ ggplot(fish_data, aes(x = Fish_Response)) +
     y = "Count"
   ) +
   theme_minimal()
+
 
 
 

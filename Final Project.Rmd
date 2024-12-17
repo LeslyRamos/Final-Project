@@ -1,0 +1,58 @@
+---
+title: "DATATHON Final Project: Impact of historical greenhouse emissions on fish response: A case study in United States"
+author: "Lesly"
+date: "2024-12-17"
+output: html_document
+---
+
+# Introduction
+
+-   **Objective**: Analyze the relationship between historical emissions of CO₂, CH₄, and N₂O and fish response to climate change using publicly available datasets.
+-   **Research Question**: How do historical greenhouse gas emissions (standardized to CO₂ equivalents) influence fish responses in the United States?
+
+
+# Methodology
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(readxl)
+library(ggplot2)
+library(dplyr)
+library(rstatix)
+library(knitr)
+library(gganimate)
+```
+
+
+## Load data
+### Emissions from 1830 to 2023
+```{r}
+emissions_data <- read_excel("USA Emissions.xlsx")
+head(emissions_data)
+```
+
+
+## Fish data
+```{r}
+fish_data <- read_csv("database (3).csv")
+head(fish_data)
+colnames(fish_data)
+```
+
+
+
+
+
+-   **References**:
+1. Jones, M. W., Peters, G. P., Gasser, T., Andrew, R. M., Schwingshackl, C., Gütschow, J., Houghton, R. A., Friedlingstein, P., Pongratz, J., & Quéré, C. L. (2023). National contributions to climate change due to historical emissions of carbon dioxide, methane, and nitrous oxide since 1850. Scientific Data, 10(1). https://doi.org/10.1038/s41597-023-02041-1
+
+2. Krabbenhoft, T. J., Myers, B. J. E., Wong, J. P., Chu, C., Tingley, R. W., Falke, J. A., Kwak, T. J., Paukert, C. P., & Lynch, A. J. (2020). FiCli, the Fish and Climate Change Database, informs climate adaptation and management for freshwater fishes. Scientific Data, 7(1). https://doi.org/10.1038/s41597-020-0465-z
+
+    
+    
+    
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
