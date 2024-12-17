@@ -7,7 +7,18 @@ output: html_document
 
 # Introduction
 
+-   Climate change poses a persistent threat to fish and their habitats across North America, because of their effect on streamflows, water temperature, salinity, and habitat connectivity (Paukert et al., 2021).
+
+-   Climate change effects impact fish by altering their physiology, disrupting spawning patterns, leading to extinctions, invasions and overall, altering community structures (Paukert et al., 2021).
+
+-   In the U.S., rising stream temperatures and altered precipitation patterns will reduce coldwater fish habitats by up to 50% by 2100 under high-emission scenarios. (R. Jones et al., 2012).
+
+-   Fisheries, including artisanal and recreational, may struggle to meet demands, impacting food security in developing countries and significant economic losses in developed countries (Ficke et al., 2007).
+
+-   Addressing climate impacts on U.S. fisheries requires proactive strategies, such as reducing other environmental stressors, while global efforts to cut greenhouse gas emissions continue (Ficke et al., 2007).
+
 -   **Objective**: Analyze the relationship between historical emissions of CO₂, CH₄, and N₂O and fish response to climate change using publicly available datasets.
+
 -   **Research Question**: How do historical greenhouse gas emissions (standardized to CO₂ equivalents) influence fish responses in the United States?
 
 # Methodology
@@ -43,7 +54,8 @@ colnames(fish_data)
 
 CH₄ (Methane): GWP = 25, N₂O (Nitrous Oxide): GWP = 298, CO₂: Directly converted from Pg to Tg by multiplying by 1,000.
 
-All gases were added in order to have a total in CO₂ equivalents by year. 
+All gases were added in order to have a total in CO₂ equivalents by year.
+
 ```{r}
 emissions_data <- emissions_data %>%
   mutate(
@@ -55,20 +67,19 @@ emissions_data <- emissions_data %>%
   group_by(Year) %>%
   summarize(Total_CO2eq = sum(Total_CO2eq, na.rm = TRUE))
 head(emissions_data)
-summary(emissions_data)
 ```
 
-
 **Data integration**: The emissions dataset was merged with the fish response dataset based on the "Year" variable. As fish response data ranged from 1964–2020 with gaps, the merged dataset only included overlapping years with available data from both sources.
+
 ```{r}
 merged_data <- fish_data %>%
   mutate(Fish_Response = as.factor(Fish_Response)) %>%
   inner_join(emissions_data, by = "Year")
 ```
 
-**Explanatory Data Analysis**
-
+**Explanatory Data Analysis**: 
 **I) Emissions Time Series**: Emissions data were visualized using animated time-series plot to highlight trends in CO₂-equivalent emissions over time.
+
 ```{r}
 ggplot(emissions_data, aes(x = Year, y = Total_CO2eq)) +
   geom_line(color = "blue") +
@@ -81,26 +92,30 @@ ggplot(emissions_data, aes(x = Year, y = Total_CO2eq)) +
   theme_minimal()
 ```
 
-**II) Fish response**
-Fish response categories were summarized using bar plots to identify the distribution of responses.
+**II) Fish response** Fish response categories were summarized to identify the distribution of responses.
+
 ```{r}
 fish_data %>% count(Fish_Response)
 ```
 
-
 **Statistical Analysis**: A logistic regression model was employed to examine the relationship between total CO₂-equivalent emissions (predictor variable) and fish response categories (dependent variable).
+
+-   *Dependent Variable*: Fish responses, categorized into various behavioral and population-level outcomes.
+
+-   *Predictor Variable*: Total CO₂-equivalent emissions (Tg/year), calculated as the sum of greenhouse gas emissions standardized using global warming potentials (GWPs).
+
 ```{r}
 model <- glm(Fish_Response ~ Total_CO2eq, 
              data = merged_data, 
              family = "binomial")
 ```
 
-
-
+The binomial family was specified in the model to handle the categorical nature of the dependent variable, where the probability of observing a specific fish response category was modeled as a logistic function of the predictor variable.
 
 # Results
 
--   **Emission trends**: The time series of emissions shows trends in CO₂-equivalent emissions over time. 
+**Emission trends**: The time series of emissions shows trends in CO₂-equivalent emissions over time in the Unites States.
+The United States has been a global leader in energy consumption since around 1850 and continues to hold this position today. By 1870, the U.S. experienced a significant influx of migrants. Following World War II, CO₂ emissions increased dramatically. In the early 20th century, the country began diversifying its energy sources, incorporating coal, natural gas, and nuclear power to reduce dependence on oil. However, this diversification also led to major environmental concerns (Henriques & Borowiecki, 2016).
 
 ```{r}
 ggplot(emissions_data, aes(x = Year)) +
@@ -114,8 +129,8 @@ ggplot(emissions_data, aes(x = Year)) +
   theme_minimal()
 ```
 
+**Fish Response**: Each bar represents the count of observations for a specific category of fish response, taller bars indicate more frequent responses in that category.The categorical distribution of fish responses suggests potential patterns in relation to emissions.The fish response data indicate varying responses to climate change, with categories such as "increase," "decrease," and "no change" being most prominent.
 
--   **Fish Response**: The categorical distribution of fish responses suggests potential patterns in relation to emissions.
 ```{r}
 ggplot(fish_data, aes(x = Fish_Response)) +
   geom_bar(fill = "steelblue") +
@@ -124,18 +139,29 @@ ggplot(fish_data, aes(x = Fish_Response)) +
     x = "Fish Response Category",
     y = "Count"
   ) +
-  theme_minimal()
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
 ```
 
--   **Statistical Model**: The logistic regression model indicates significant relationships between total CO₂-equivalent emissions and fish response (details in summary table).
+**Statistical Model**: The logistic regression analysis identified a significant relationship between CO₂-equivalent emissions and fish responses. The model summary provides statistical evidence for the influence of emissions on fish behavior and survival, supporting the hypothesis of climate change impact on freshwater ecosystems.
+
+*Interpretation of Results* 
+
+-Intercept (7.645): This is the log-odds of the baseline category of Fish_Response when Total_CO2eq is 0.
+
+-Slope for Total_CO2eq (-0.0005484):The negative coefficient suggests an inverse relationship between Total_CO2eq and the odds of the Fish_Response category being in a particular state.For every unit increase in Total_CO2eq, the log-odds of the response decrease by 0.0005484.
+
+-Significance (Pr(\>\|z\|) = 0.009):The p-value indicates that the relationship between Total_CO2eq and Fish_Response is statistically significant at the 1% level.This suggests a non-random relationship between emissions and fish responses.
+
 ```{r}
 summary(model)
 ```
 
+Visualization of the relationship between total CO₂-equivalent emissions and fish response.
 
-### Visualize the relationship
-
-```{r}
+```{r, message=FALSE, warning=FALSE}
 ggplot(merged_data, aes(x = Total_CO2eq, y = Fish_Response)) +
   geom_jitter(width = 0.1, height = 0.1, alpha = 0.6) +
   geom_smooth(method = "glm", method.args = list(family = "binomial"), color = "blue") +
@@ -147,34 +173,40 @@ ggplot(merged_data, aes(x = Total_CO2eq, y = Fish_Response)) +
   theme_minimal()
 ```
 
-
 # Discussion
 
--   **Findings**:
-    -   Total CO₂-equivalent emissions are significantly correlated with changes in fish responses.
-    -   Increasing emissions are associated with more negative fish response categories.
--   **Limitations**:
-    -   Potential biases in the fish response dataset.
-    -   Lack of control variables (e.g., temperature).
+-   The observed increase in CO₂-equivalent emissions over time, reflects the historical reliance on fossil fuels, energy and industrial processes, leading to heightened climate change effects over the decades. The animated visualization effectively communicates the progression and acceleration of emissions, reinforcing the urgency of mitigation measures.
+
+-   The distribution of fish response categories illustrates the diverse impacts of climate change on freshwater ecosystems. Categories such as "increase," "decrease," and "no change" were the most prevalent, suggesting that fish populations and behaviors respond variably to environmental stressors. These patterns could be attributed to different species,adaptability, habitat characteristics, and ecosystems.
+
+-   The logistic regression analysis identified a statistically significant inverse relationship between total CO₂-equivalent emissions and specific fish response categories. The negative slope of the model indicates that as greenhouse gas emissions increase, the change of certain fish responses becomes more pronounced. This result aligns with existing literature on the sensitivity of freshwater fish to climate change.
+
+-Fish responses such as earlier migrations or reduced populations can disrupt food webs, threaten biodiversity, and challenge conservation efforts. These ecological shifts could have negative effects on human food security and economic stability.
 
 # Conclusions
 
--   This study highlights the impact of historical greenhouse gas emissions (in CO₂ equivalents) on fish response.
+-   This study demonstrates a statistically significant relationship between historical greenhouse gas emissions and the behavioral and population responses of freshwater fish in the United States. The findings emphasize the urgency of addressing climate change to preserve aquatic ecosystems.
 
--   Future work should include additional ecological variables for a more comprehensive analysis.
+-   Historical emissions have consistently increased, correlating with significant environmental and ecological challenges.
 
--   **References**:
+-   Freshwater fish exhibit varied responses to climate stressors, reflecting ecosystem vulnerabilities and adaptability limits.
 
-1.  Jones, M. W., Peters, G. P., Gasser, T., Andrew, R. M., Schwingshackl, C., Gütschow, J., Houghton, R. A., Friedlingstein, P., Pongratz, J., & Quéré, C. L. (2023). National contributions to climate change due to historical emissions of carbon dioxide, methane, and nitrous oxide since 1850. Scientific Data, 10(1). <https://doi.org/10.1038/s41597-023-02041-1>
+-   Increased greenhouse gas emissions are associated with adverse fish responses, underlining the ecological costs of unmitigated emissions.
 
-2.  Krabbenhoft, T. J., Myers, B. J. E., Wong, J. P., Chu, C., Tingley, R. W., Falke, J. A., Kwak, T. J., Paukert, C. P., & Lynch, A. J. (2020). FiCli, the Fish and Climate Change Database, informs climate adaptation and management for freshwater fishes. Scientific Data, 7(1). <https://doi.org/10.1038/s41597-020-0465-z>
+**Limitations** The analysis identifies correlations but cannot establish causation. Experimental studies could provide deeper insights into causal relationships.
 
-3.  Fish and Climate Change Database (FICLI). (n.d.). <https://rconnect.usgs.gov/ficli/>
+# References
 
-4.  Pittelkow, C. M., Adviento-Borbe, M. A., Hill, J. E., Six, J., Van Kessel, C., & Linquist, B. A. (2013). Yield-scaled global warming potential of annual nitrous oxide and methane emissions from continuously flooded rice in response to nitrogen input. Agriculture Ecosystems & Environment, 177, 10–20. <https://doi.org/10.1016/j.agee.2013.05.011>
+1.  Ficke, A. D., Myrick, C. A., & Hansen, L. J. (2007). Potential impacts of global climate change on freshwater fisheries. Reviews in Fish Biology and Fisheries, 17(4), 581–613. <https://doi.org/10.1007/s11160-007-9059-5>
 
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
+2.  Fish and Climate Change Database (FICLI). (n.d.). <https://rconnect.usgs.gov/ficli/>
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+3.  Henriques, S. T., & Borowiecki, K. J. (2016). The drivers of long-run CO2 emissions in Europe, North America and Japan since 1800. Energy Policy, 101, 537–549. <https://doi.org/10.1016/j.enpol.2016.11.005>
+
+4.  Jones, M. W., Peters, G. P., Gasser, T., Andrew, R. M., Schwingshackl, C., Gütschow, J., Houghton, R. A., Friedlingstein, P., Pongratz, J., & Quéré, C. L. (2023). National contributions to climate change due to historical emissions of carbon dioxide, methane, and nitrous oxide since 1850. Scientific Data, 10(1). <https://doi.org/10.1038/s41597-023-02041-1>
+
+5.  Jones, R., Travers, C., Rodgers, C., Lazar, B., English, E., Lipton, J., Vogel, J., Strzepek, K., & Martinich, J. (2012). Climate change impacts on freshwater recreational fishing in the United States. Mitigation and Adaptation Strategies for Global Change, 18(6), 731–758. <https://doi.org/10.1007/s11027-012-9385-3>
+
+6.  Krabbenhoft, T. J., Myers, B. J. E., Wong, J. P., Chu, C., Tingley, R. W., Falke, J. A., Kwak, T. J., Paukert, C. P., & Lynch, A. J. (2020). FiCli, the Fish and Climate Change Database, informs climate adaptation and management for freshwater fishes. Scientific Data, 7(1). <https://doi.org/10.1038/s41597-020-0465-z>
+
+7.  Pittelkow, C. M., Adviento-Borbe, M. A., Hill, J. E., Six, J., Van Kessel, C., & Linquist, B. A. (2013). Yield-scaled global warming potential of annual nitrous oxide and methane emissions from continuously flooded rice in response to nitrogen input. Agriculture Ecosystems & Environment, 177, 10–20. <https://doi.org/10.1016/j.agee.2013.05.011>
