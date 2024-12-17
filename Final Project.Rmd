@@ -7,12 +7,11 @@ output: html_document
 
 # Introduction
 
-
 -   **Objective**: Analyze the relationship between historical emissions of CO₂, CH₄, and N₂O and fish response to climate change using publicly available datasets.
 -   **Research Question**: How do historical greenhouse gas emissions (standardized to CO₂ equivalents) influence fish responses in the United States?
 
-
 # Methodology
+
 In order to conduct the analysis, the following R libraries were used:
 
 ```{r setup, include=FALSE}
@@ -25,68 +24,51 @@ library(knitr)
 library(gganimate)
 ```
 
+**Data sources**: National contributions to climate change due to historical emissions of carbon dioxide, methane, and nitrous oxide from 1830 to 2023 were obtained from (Jones et al., 2023), in an Excel document.
 
-## Load data
-### Emissions from 1830 to 2023
 ```{r}
 emissions_data <- read_excel("USA Emissions.xlsx")
 head(emissions_data)
 ```
 
+Fish and climate change data were obtained from the FiCli website, which is a site that provides a comprehensive database of peer-reviewed literature available on how climate change has impacted inland fishes worldwide.The only filter used were country "United States". The document was download in a csv format.
 
-## Fish data
 ```{r}
 fish_data <- read_csv("database (3).csv")
 head(fish_data)
 colnames(fish_data)
 ```
 
+**Standardization of greenhouse gas emissions**: To analyze emissions uniformly, all gases were converted to CO₂ equivalents (Tg/year) using global warming potentials (GWPs) (Pittelkow et al., 2013):
 
+CH₄ (Methane): GWP = 25, N₂O (Nitrous Oxide): GWP = 298, CO₂: Directly converted from Pg to Tg by multiplying by 1,000.
 
-## Standardize Units, convert CH4 and N2O to CO2 equivalents
-## Using global warming potentials (GWP): CH4 = 25, N2O = 298
-### Standardize Units
-### Convert greenhouse gases to CO2 equivalents
-### GWP (Global Warming Potential): CH4 = 25, N2O = 298
-
+All gases were added in order to have a total in CO₂ equivalents by year. 
 ```{r}
 emissions_data <- emissions_data %>%
   mutate(
-    CH4_in_CO2eq = if_else(Gas == "CH[4]", Data * 25, 0), # Convert CH4 to CO2 equivalents
-    N2O_in_CO2eq = if_else(Gas == "N[2]*O", Data * 298, 0), # Convert N2O to CO2 equivalents
-    CO2_in_CO2eq = if_else(Gas == "CO[2]", Data * 1000, 0), # Convert CO2 from Pg to Tg
-    Total_CO2eq = CH4_in_CO2eq + N2O_in_CO2eq + CO2_in_CO2eq # Sum of all gases in CO2eq
+    CH4_in_CO2eq = if_else(Gas == "CH[4]", Data * 25, 0),
+    N2O_in_CO2eq = if_else(Gas == "N[2]*O", Data * 298, 0),
+    CO2_in_CO2eq = if_else(Gas == "CO[2]", Data * 1000, 0),
+    Total_CO2eq = CH4_in_CO2eq + N2O_in_CO2eq + CO2_in_CO2eq
   ) %>%
   group_by(Year) %>%
-  summarize(Total_CO2eq = sum(Total_CO2eq, na.rm = TRUE)) # Aggregate by year
+  summarize(Total_CO2eq = sum(Total_CO2eq, na.rm = TRUE))
 head(emissions_data)
+summary(emissions_data)
 ```
 
-## Merge dataset
+
+**Data integration**: The emissions dataset was merged with the fish response dataset based on the "Year" variable. As fish response data ranged from 1964–2020 with gaps, the merged dataset only included overlapping years with available data from both sources.
 ```{r}
 merged_data <- fish_data %>%
   mutate(Fish_Response = as.factor(Fish_Response)) %>%
   inner_join(emissions_data, by = "Year")
 ```
 
+**Explanatory Data Analysis**
 
-## Data exploration
-## Summary for emissions
-```{r}
-summary(emissions_data)
-```
-
-
-### Summary for fish response
-```{r}
-fish_data %>% count(Fish_Response)
-```
-
-
-
-
-
-### Animation: Emissions Over Time
+**I) Emissions Time Series**: Emissions data were visualized using animated time-series plot to highlight trends in CO₂-equivalent emissions over time.
 ```{r}
 ggplot(emissions_data, aes(x = Year, y = Total_CO2eq)) +
   geom_line(color = "blue") +
@@ -99,22 +81,27 @@ ggplot(emissions_data, aes(x = Year, y = Total_CO2eq)) +
   theme_minimal()
 ```
 
+**II) Fish response**
+Fish response categories were summarized using bar plots to identify the distribution of responses.
+```{r}
+fish_data %>% count(Fish_Response)
+```
 
 
-## Statistical Analysis
-### Model Relationship Between Emissions and Fish Response
-### Logistic regression to analyze relationship
+**Statistical Analysis**: A logistic regression model was employed to examine the relationship between total CO₂-equivalent emissions (predictor variable) and fish response categories (dependent variable).
 ```{r}
 model <- glm(Fish_Response ~ Total_CO2eq, 
              data = merged_data, 
              family = "binomial")
-summary(model)
 ```
 
 
-# Results 
-- **Visualization**: The time series of emissions shows trends in CO₂-equivalent emissions over time.
-### Visualize Emissions Over Time
+
+
+# Results
+
+-   **Emission trends**: The time series of emissions shows trends in CO₂-equivalent emissions over time. 
+
 ```{r}
 ggplot(emissions_data, aes(x = Year)) +
   geom_line(aes(y = Total_CO2eq, color = "Total CO2eq (Tg/year)")) +
@@ -127,8 +114,8 @@ ggplot(emissions_data, aes(x = Year)) +
   theme_minimal()
 ```
 
-- **Fish Response**: The categorical distribution of fish responses suggests potential patterns in relation to emissions.
-### Visualization: Fish Response Distribution
+
+-   **Fish Response**: The categorical distribution of fish responses suggests potential patterns in relation to emissions.
 ```{r}
 ggplot(fish_data, aes(x = Fish_Response)) +
   geom_bar(fill = "steelblue") +
@@ -140,10 +127,14 @@ ggplot(fish_data, aes(x = Fish_Response)) +
   theme_minimal()
 ```
 
+-   **Statistical Model**: The logistic regression model indicates significant relationships between total CO₂-equivalent emissions and fish response (details in summary table).
+```{r}
+summary(model)
+```
 
-- **Statistical Model**: The logistic regression model indicates significant relationships between total CO₂-equivalent emissions and fish response (details in summary table).
 
 ### Visualize the relationship
+
 ```{r}
 ggplot(merged_data, aes(x = Total_CO2eq, y = Fish_Response)) +
   geom_jitter(width = 0.1, height = 0.1, alpha = 0.6) +
@@ -157,35 +148,31 @@ ggplot(merged_data, aes(x = Total_CO2eq, y = Fish_Response)) +
 ```
 
 
-
-
-
-
 # Discussion
-- **Findings**:
-  - Total CO₂-equivalent emissions are significantly correlated with changes in fish responses.
-  - Increasing emissions are associated with more negative fish response categories.
-- **Limitations**:
-  - Potential biases in the fish response dataset.
-  - Lack of control variables (e.g., temperature).
 
-
-
+-   **Findings**:
+    -   Total CO₂-equivalent emissions are significantly correlated with changes in fish responses.
+    -   Increasing emissions are associated with more negative fish response categories.
+-   **Limitations**:
+    -   Potential biases in the fish response dataset.
+    -   Lack of control variables (e.g., temperature).
 
 # Conclusions
-- This study highlights the impact of historical greenhouse gas emissions (in CO₂ equivalents) on fish response.
-- Future work should include additional ecological variables for a more comprehensive analysis.
 
+-   This study highlights the impact of historical greenhouse gas emissions (in CO₂ equivalents) on fish response.
 
+-   Future work should include additional ecological variables for a more comprehensive analysis.
 
 -   **References**:
-1. Jones, M. W., Peters, G. P., Gasser, T., Andrew, R. M., Schwingshackl, C., Gütschow, J., Houghton, R. A., Friedlingstein, P., Pongratz, J., & Quéré, C. L. (2023). National contributions to climate change due to historical emissions of carbon dioxide, methane, and nitrous oxide since 1850. Scientific Data, 10(1). https://doi.org/10.1038/s41597-023-02041-1
 
-2. Krabbenhoft, T. J., Myers, B. J. E., Wong, J. P., Chu, C., Tingley, R. W., Falke, J. A., Kwak, T. J., Paukert, C. P., & Lynch, A. J. (2020). FiCli, the Fish and Climate Change Database, informs climate adaptation and management for freshwater fishes. Scientific Data, 7(1). https://doi.org/10.1038/s41597-020-0465-z
+1.  Jones, M. W., Peters, G. P., Gasser, T., Andrew, R. M., Schwingshackl, C., Gütschow, J., Houghton, R. A., Friedlingstein, P., Pongratz, J., & Quéré, C. L. (2023). National contributions to climate change due to historical emissions of carbon dioxide, methane, and nitrous oxide since 1850. Scientific Data, 10(1). <https://doi.org/10.1038/s41597-023-02041-1>
 
-    
-    
-    
+2.  Krabbenhoft, T. J., Myers, B. J. E., Wong, J. P., Chu, C., Tingley, R. W., Falke, J. A., Kwak, T. J., Paukert, C. P., & Lynch, A. J. (2020). FiCli, the Fish and Climate Change Database, informs climate adaptation and management for freshwater fishes. Scientific Data, 7(1). <https://doi.org/10.1038/s41597-020-0465-z>
+
+3.  Fish and Climate Change Database (FICLI). (n.d.). <https://rconnect.usgs.gov/ficli/>
+
+4.  Pittelkow, C. M., Adviento-Borbe, M. A., Hill, J. E., Six, J., Van Kessel, C., & Linquist, B. A. (2013). Yield-scaled global warming potential of annual nitrous oxide and methane emissions from continuously flooded rice in response to nitrogen input. Agriculture Ecosystems & Environment, 177, 10–20. <https://doi.org/10.1016/j.agee.2013.05.011>
+
 ```{r pressure, echo=FALSE}
 plot(pressure)
 ```

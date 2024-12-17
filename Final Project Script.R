@@ -32,18 +32,15 @@ emissions_data <- emissions_data %>%
   summarize(Total_CO2eq = sum(Total_CO2eq, na.rm = TRUE)) # Aggregate by year
 
 head(emissions_data)
+# Summary for emissions
+summary(emissions_data)
+
 
 ## Merge dataset
 merged_data <- fish_data %>%
   mutate(Fish_Response = as.factor(Fish_Response)) %>%
   inner_join(emissions_data, by = "Year")
-
-## Data exploration
-# Summary for emissions
-summary(emissions_data)
-
-# Summary for fish response
-fish_data %>% count(Fish_Response)
+head(merged_data)
 
 
 ### Visualize Emissions Over Time
@@ -89,6 +86,8 @@ ggplot(merged_data, aes(x = Total_CO2eq, y = Fish_Response)) +
   theme_minimal()
 
 
+# Summary for fish response
+fish_data %>% count(Fish_Response)
 
 ### Visualization: Fish Response Distribution
 ggplot(fish_data, aes(x = Fish_Response)) +
